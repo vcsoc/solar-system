@@ -66,7 +66,8 @@ controls.update();
 
 // Set the application version in the UI
 document.getElementById('app-version').textContent = `v${VERSION}`;
-document.getElementById('app-version-link').href = `https://github.com/vcsoc/solar-system/tree/v${VERSION}`;
+// Point to Releases page tag so the link always resolves once the tag is pushed
+document.getElementById('app-version-link').href = `https://github.com/vcsoc/solar-system/releases/tag/v${VERSION}`;
 
 // ======== LIGHTING ========
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);

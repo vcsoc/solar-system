@@ -221,6 +221,29 @@ def cherry_pick_last_to_public(public_remote, public_branch, last_commit):
             # If git fails to remove, try filesystem removal
             shutil.rmtree(worktree_dir, ignore_errors=True)
 
+def read_version_from_package_json(repo_root: str) -> str | None:
+    try:
+        import json
+        with open(os.path.join(repo_root, 'package.json'), 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            ver = str(data.get('version', '')).strip()
+            return ver or None
+    except Exception as e:
+        log(f"⚠️ Could not read version from package.json: {e}")
+        return None
+
+def ensure_tag_prefix(version: str) -> str:
+    return version if version.startswith('v') else f"v{version}"
+
+def tag_and_push_public(tag_name: str, message: str, commit_sha: str, public_remote: str):
+    # Create/overwrite local annotated tag pointing to commit_sha, then push tag to public
+    try:
+        must(["git", "tag", "-f", "-a", tag_name, "-m", message, commit_sha], f"Creating tag {tag_name}")
+        must(["git", "push", public_remote, f"refs/tags/{tag_name}", "--force"], f"Pushing tag {tag_name}")
+        log(f"✓ Pushed tag {tag_name} → {public_remote}")
+    except Exception as e:
+        log(f"⚠️ Failed to push tag {tag_name}: {e}")
+
 def parse_args():
     p = argparse.ArgumentParser(description="Push full history to private and single-commit snapshot to public.")
     p.add_argument("--private-remote", default="private")
@@ -280,6 +303,11 @@ def main():
             log("→ Building public snapshot from HEAD tree…")
             pub_commit = make_root_commit_from_head_tree(msg, env_overrides=env)
         push_public_snapshot(args.public_remote, args.public_branch, pub_commit)
+        # Tag public commit with v<version> if available
+        version = read_version_from_package_json(repo_root)
+        if version:
+            tag_name = ensure_tag_prefix(version)
+            tag_and_push_public(tag_name, f"Release {tag_name}", pub_commit, args.public_remote)
     else:
         # Cherry-pick only the latest local commit onto the public tip
         if unborn:
@@ -301,6 +329,17 @@ def main():
                 # Determine last local commit
                 last_local = must(["git", "rev-parse", "HEAD"], "Getting last local commit")
                 cherry_pick_last_to_public(args.public_remote, args.public_branch, last_local)
+                # Tag the public HEAD in the worktree by pushing a tag that points to the same commit
+                version = read_version_from_package_json(repo_root)
+                if version:
+                    tag_name = ensure_tag_prefix(version)
+                    # Resolve the commit we just pushed on public: fetch, then tag that commit id locally and push
+                    # Fetch updated public branch to get its tip
+                    run(["git", "fetch", args.public_remote, args.public_branch])
+                    # Resolve fetched tip
+                    pub_tip = run(["git", "rev-parse", "FETCH_HEAD"]).stdout.strip()
+                    if pub_tip:
+                        tag_and_push_public(tag_name, f"Release {tag_name}", pub_tip, args.public_remote)
 
     log("\n🎉 Done.")
     if unborn:
