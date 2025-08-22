@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:,">
+    <title>Interactive 3D Solar System</title>
+    <link rel="stylesheet" href="./styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    
+</head>
+<body>
+    <div id="notification-container"></div>
+
+    <div id="loading-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.3); color: white; display: flex; justify-content: center; align-items: center; z-index: 9999;">
+        <div class="loading-content" style="font-size: 2em;">
+            Loading...
+            <div id="loading-steps" style="font-size: 11px; margin-top: 10px;"></div>
+        </div>
+    </div>
+
+    <div id="scene-container"></div>
+    <canvas id="crosshair-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;"></canvas>
+    
+    <div id="top-right-ui">
+        <button id="save-image-button">Save Image</button>
+        <button id="settings-button">Settings</button>
+        <a href="#" id="help-link">Help</a>
+    </div>
+
+    <button id="panel-toggle-open" class="fixed top-4 left-4 z-50 lg:hidden bg-gray-800 p-2 rounded-md">
+        <svg class="w-6 h-6 text-stone-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+    </button>
+    <div id="ui-container" class="text-stone-200">
+        <button id="panel-toggle-close" class="absolute top-4 right-4 z-50 lg:hidden bg-gray-700 p-1 rounded-md">
+            <svg class="w-6 h-6 text-stone-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+        <h1 class="text-2xl font-bold text-amber-400 mb-4">Our Solar System</h1>
+        <p class="text-sm mb-4">Click/drag to rotate, scroll to zoom, CTRL+Click for options.</p>
+
+        <div id="options">
+            <div class="control-section">
+                <label for="planet-select" class="label">Select Planet</label>
+                <select id="planet-select" class="select">
+                    <option value="">None</option>
+                </select>
+                <div class="flex space-x-2 mt-2">
+                     <button id="goto-planet" class="control-button bg-amber-500 hover:bg-amber-600 text-stone-200">Go To</button>
+                    <select id="follow-mode" class="select">
+                        <option value="none">Follow: None</option>
+                        <option value="focus">Follow: Focus</option>
+                        <option value="track">Follow: Track</option>
+                    </select>
+                </div>
+                 <button id="reset-view" class="action-button mt-2 bg-stone-700 hover:bg-stone-600 text-stone-200">Reset View</button>
+            </div>
+             <div class="control-section">
+                <label for="constellation-select" class="label">View Constellation</label>
+                <select id="constellation-select" class="select">
+                    <option value="">None</option>
+                </select>
+            </div>
+            <div class="control-section">
+                <button id="toggle-sliders-panel" class="action-button bg-stone-700 hover:bg-stone-600 text-stone-200">Show Sliders</button>
+                <div id="sliders-panel" class="hidden">
+                    <div class="control-section" id="zoom-slider-container" style="display: none;">
+                        <label for="zoom-slider" class="label">Zoom</label>
+                        <input type="range" id="zoom-slider" min="100" max="2000" step="10" value="1000" class="w-full">
+                    </div>
+                    <div class="control-section">
+                        <label for="speed-slider" class="label">Orbit Speed: <span id="speed-display">1.0x</span></label>
+                        <input type="range" id="speed-slider" min="0" max="10" step="0.1" value="1.0" class="w-full">
+                    </div>
+                    <div class="control-section">
+                        <label for="move-speed-slider" class="label">Movement Speed: <span id="move-speed-display">1.0x</span></label>
+                        <input type="range" id="move-speed-slider" min="0.1" max="10" step="0.1" value="1.0" class="w-full">
+                    </div>
+                    <div class="control-section">
+                        <label for="sun-intensity" class="label">Sun Intensity <span style="color: #ffcc66; font-size: 12px;">(Realistic: 1.5)</span></label>
+                        <input type="range" id="sun-intensity" min="0.5" max="4" step="0.1" value="1.5" class="w-full">
+                    </div>
+                    <div class="control-section">
+                        <label for="orbit-opacity" class="label">Orbit Path Transparency</label>
+                        <input type="range" id="orbit-opacity" min="0" max="1" step="0.01" value="0.4" class="w-full">
+                    </div>
+                    <div class="control-section">
+                        <label for="star-density" class="label">Background Star Density</label>
+                        <input type="range" id="star-density" min="0" max="1" step="0.01" value="0.7" class="w-full">
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4">
+                <button id="toggle-animation" class="control-button bg-amber-500 hover:bg-amber-600 text-stone-200">Pause Animation</button>
+            </div>
+            <div class="mt-4">
+                <label class="toggle-label">
+                    <span>Show All Names</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="toggle-labels" checked>
+                        <span class="toggle-slider round"></span>
+                    </div>
+                </label>
+            </div>
+            <div class="control-section" id="bookmarks-block">
+                <button id="toggle-bookmarks-panel" class="action-button bg-stone-700 hover:bg-stone-600 text-stone-200">Show Bookmarks</button>
+                <div id="bookmarks-panel" class="hidden">
+                    <div class="control-section" id="bookmarks-section">
+                        <h2 class="text-lg font-bold text-stone-200">Bookmarks</h2>
+                        <p class="text-xs text-gray-400 mt-1">Click "Save Bookmark" to capture the current view. Use "Go" to return later or "Set Default" to load it on start.</p>
+                        <div class="mt-2">
+                            <label class="block mb-1 text-sm font-medium text-gray-400">Go to Position</label>
+                            <div class="grid grid-cols-1 gap-2">
+                                <input type="text" id="goto-position-input" placeholder="x:0 y:1500 z:3500 d:3808 n:S.180" class="input">
+                                <p class="text-xs text-gray-400">Format: <code>x:0 y:1500 z:3500 d:3808 n:S.180</code> or dot format <code>0.1500.3500.3808.S.180</code>.</p>
+                            </div>
+                            <button id="goto-position-btn" class="action-button mt-2 bg-amber-500 hover:bg-amber-600 text-stone-200">Go</button>
+                        </div>
+                        <div class="mt-4">
+                            <label for="bookmark-name-input" class="block mb-1 text-sm font-medium text-gray-400">Save Current Position</label>
+                            <input type="text" id="bookmark-name-input" placeholder="Bookmark Name" class="input">
+                            <button id="save-bookmark-btn" class="action-button mt-2 bg-green-600 hover:bg-green-700 text-stone-200">Save Bookmark</button>
+                        </div>
+                        <div class="mt-4">
+                            <label class="block mb-1 text-sm font-medium text-gray-400">Saved Bookmarks</label>
+                            <ul id="bookmarks-list" class="list-none p-0 m-0">
+                                <!-- Bookmarks will be dynamically added here -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="planet-info" class="info-box" style="display: none;">
+            <h2 id="planet-name" class="text-xl font-bold text-stone-200"></h2>
+            <div id="planet-details" class="text-sm mt-2"></div>
+        </div>
+        
+        <div id="constellation-info" class="info-box" style="display: none;">
+            <h2 id="constellation-name" class="text-xl font-bold text-stone-200"></h2>
+            <p id="constellation-description" class="text-sm mt-2"></p>
+        </div>
+        
+        <div id="planet-time-info" class="info-box" style="display: none;">
+             <h2 class="text-lg font-bold text-stone-200">Planetary Date</h2>
+             <p id="planet-date-text" class="text-sm mt-2"></p>
+        </div>
+
+        <div id="measurement-result" class="info-box" style="display: none;">
+            <h2 class="text-lg font-bold text-stone-200">Measurement</h2>
+            <p id="distance-text" class="text-sm mt-2"></p>
+            <p id="distance-analogy" class="text-xs mt-2 text-gray-400"></p>
+            <p id="travel-time-text" class="text-sm mt-2"></p>
+            <button id="clear-measurement" class="action-button mt-4 bg-red-600 hover:bg-red-700 text-stone-200">Clear Measurement</button>
+        </div>
+
+    </div>
+
+    <div id="context-menu">
+        <div id="measure-start">Set Measurement Start</div>
+        <div id="measure-end">Set Measurement End</div>
+        <div id="select-compare-source">Select for Compare</div>
+        <div id="select-compare-target">Compare with Selected</div>
+    </div>
+    
+    <div id="zoom-indicator">
+        <p id="coordinates-level" class="font-bold text-stone-200" style="display: inline-block; margin-right: 5px;"></p>
+        <button id="copy-coords-button" style="background: none; border: none; cursor: pointer; color: white; font-size: 1em; vertical-align: middle; padding: 0;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clipboard" viewBox="0 0 16 16">
+                <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+                <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+            </svg>
+        </button>
+        <p id="direction-level" class="font-bold text-stone-200"></p>
+        <p id="zoom-level" class="font-bold text-stone-200"></p>
+        <p id="scale-level" class="text-sm text-gray-400"></p>
+    </div>
+
+    <div id="version-info" style="position: fixed; bottom: 1rem; left: 1rem; color: #a0aec0; font-size: 0.8rem; z-index: 50; background-color: rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.15); padding: 0.35rem 0.6rem; border-radius: 0.375rem; backdrop-filter: blur(10px);">
+        <a id="app-version-link" href="https://github.com/vcsoc/solarsystem" target="_blank" rel="noopener noreferrer" style="color: #f59e0b; text-decoration: none;">
+            <span id="app-version">v1.1.5</span>
+        </a>
+        <span style="margin: 0 6px; opacity: 0.6;">•</span>
+        <a href="https://www.linkedin.com/in/chrisvisser/" target="_blank" rel="noopener noreferrer" style="color: #a0aec0; text-decoration: none;">Chris Visser</a>
+    </div>
+
+    <div id="help-panel">
+        <button id="close-help-panel">&times;</button>
+        <h2 class="text-xl font-bold text-stone-200 mb-4">Help & Instructions</h2>
+        <div class="text-sm space-y-4">
+            <p><strong>Navigation:</strong> Click and drag to rotate the camera. Use the scroll wheel to zoom in and out.</p>
+            <p><strong>Selection:</strong> Click on any planet or moon to see its information in the left panel.</p>
+            <p><strong>Context Menu:</strong> Hold the CTRL key and click anywhere in the scene to open the context menu with more options.</p>
+            <p><strong>Measurement:</strong> Use the context menu (CTRL+Click) to set a start and end point for measurement. The distance will be displayed in the left panel.</p>
+            <p><strong>Comparison:</strong> Use the context menu to select two celestial bodies to compare. First, CTRL+Click on the first object and select "Select for Compare". Then, CTRL+Click on the second object and select "Compare with Selected". A modal will appear showing them side-by-side.</p>
+            <p><strong>Follow Planet:</strong> Select a planet from the dropdown and use the "Follow" options to have the camera focus on or track the planet's movement.</p>
+        </div>
+    </div>
+
+    <div id="compare-modal-overlay" class="modal-overlay">
+        <div id="compare-modal" class="modal">
+            <div id="comparison-container" class="comparison-container">
+                <img id="compare-image" class="compare-image" />
+            </div>
+            <div class="modal-header">
+                <h2 class="text-xl font-bold text-stone-200">Comparison</h2>
+                <div style="display: flex; gap: 10px; flex-shrink: 0; flex-grow: 0;"> <!-- Add flex-grow: 0 -->
+                    <a href="#" id="save-compare-image" class="modal-action-link">Save Image</a>
+                    <a href="#" id="fullscreen-compare-image" class="modal-action-link">Fullscreen</a>
+                </div>
+                <button id="close-compare-modal" class="close-modal">&times;</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="settings-modal-overlay" class="modal-overlay">
+        <div id="settings-modal" class="modal">
+            <div class="modal-header">
+                <h2 class="text-xl font-bold text-stone-200">Settings</h2>
+                <button id="close-modal" class="close-modal">&times;</button>
+            </div>
+            <div class="control-section">
+                <label class="toggle-label">
+                    <span>Show Starfield</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="toggle-background" checked>
+                        <span class="toggle-slider round"></span>
+                    </div>
+                </label>
+            </div>
+            <div class="control-section">
+                <label class="toggle-label">
+                    <span title="Show/hide the bottom-right coordinates HUD and the Bookmarks feature.">Enable Coords</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="toggle-coords">
+                        <span class="toggle-slider round"></span>
+                    </div>
+                </label>
+                <p class="text-xs text-gray-400 mt-1">When off, hides the coords HUD and all Bookmarks UI.</p>
+            </div>
+            <div class="control-section">
+                <label class="toggle-label">
+                    <span>Enable Keyboard Movement</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="toggle-keyboard-movement" checked>
+                        <span class="toggle-slider round"></span>
+                    </div>
+                </label>
+            </div>
+            <div class="control-section">
+                <label for="movement-keys" class="label">Movement Keys</label>
+                <select id="movement-keys" class="select">
+                    <option value="wasd">W, S, A, D</option>
+                    <option value="arrows">Arrow Keys</option>
+                </select>
+            </div>
+            <div class="control-section">
+                <label for="travel-speed-input" class="label">Travel Speed (km/h)</label>
+                <input type="number" id="travel-speed-input" value="10000" class="input">
+            </div>
+            <div class="control-section">
+                <label for="compare-image-width-input" class="label">Comparison Image Width</label>
+                <input type="number" id="compare-image-width-input" value="1920" class="input">
+            </div>
+            <div class="control-section">
+                <label for="compare-image-height-input" class="label">Comparison Image Height</label>
+                <input type="number" id="compare-image-height-input" value="1080" class="input">
+            </div>
+            <div class="control-section">
+                <label class="toggle-label">
+                    <span>Enable Custom Console</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="toggle-custom-console">
+                        <span class="toggle-slider round"></span>
+                    </div>
+                </label>
+            </div>
+            <div class="control-section">
+                <label class="toggle-label">
+                    <span>Enable console.log</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="toggle-console-log" checked>
+                        <span class="toggle-slider round"></span>
+                    </div>
+                </label>
+            </div>
+            <div class="control-section">
+                <label class="toggle-label">
+                    <span>Enable console.info</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="toggle-console-info" checked>
+                        <span class="toggle-slider round"></span>
+                    </div>
+                </label>
+            </div>
+            <div class="control-section">
+                <label class="toggle-label">
+                    <span>Enable console.warn</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="toggle-console-warn" checked>
+                        <span class="toggle-slider round"></span>
+                    </div>
+                </label>
+            </div>
+            <div class="control-section">
+                <label class="toggle-label">
+                    <span>Enable console.error</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="toggle-console-error" checked>
+                        <span class="toggle-slider round"></span>
+                    </div>
+                </label>
+            </div>
+            <div class="control-section">
+                <label class="toggle-label">
+                    <span>Enable console.debug</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="toggle-console-debug" checked>
+                        <span class="toggle-slider round"></span>
+                    </div>
+                </label>
+            </div>
+            <div class="control-section">
+                <label class="toggle-label">
+                    <span>Show Planet Names</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="toggle-planet-names" checked>
+                        <span class="toggle-slider round"></span>
+                    </div>
+                </label>
+            </div>
+            <div class="control-section">
+                <label class="toggle-label">
+                    <span>Show Moon Names</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="toggle-moon-names" checked>
+                        <span class="toggle-slider round"></span>
+                    </div>
+                </label>
+            </div>
+            <div class="control-section">
+                <label for="crosshair-style" class="label">Crosshair Style</label>
+                <select id="crosshair-style" class="select">
+                    <option value="none">None</option>
+                    <option value="dot">Dot</option>
+                    <option value="cross">Cross</option>
+                    <option value="circle">Circle</option>
+                    <option value="dot-ring">Dot with Ring</option>
+                </select>
+            </div>
+            <div class="control-section">
+                <label for="crosshair-color" class="label">Crosshair Color</label>
+                <input type="color" id="crosshair-color" value="#FFFFFF" class="w-full h-10">
+            </div>
+        </div>
+    </div>
+
+    <div id="custom-terminal" style="position: fixed; bottom: 0; left: 0; width: 100%; height: 200px; background-color: rgba(0, 0, 0, 0.8); color: #0f0; font-family: 'Consolas', 'monospace'; font-size: 12px; overflow-y: scroll; padding: 10px; box-sizing: border-box; display: none; z-index: 5000;"></div>
+
+    <script type="module" src="./main.js"></script>
+    <script src="./coordinateTest.js"></script>
+</body>
+</html>
