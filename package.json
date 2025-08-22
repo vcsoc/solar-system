@@ -1,0 +1,81 @@
+{
+  "name": "solar-system-3d",
+  "version": "1.1.36",
+  "description": "A 3D solar system visualization for kids.",
+  "main": "electron.js",
+  "source": "public/index.html",
+  "homepage": "./",
+  "targets": {
+    "main": false
+  },
+  "scripts": {
+    "prestart": "kill-port 3022",
+    "start": "node server.js",
+    "electron": "electron .",
+    "electron-dev": "concurrently -k \"npm:start\" \"npm:electron:start\"",
+    "electron:start": "npm run build && wait-on http://localhost:3022 && .\\node_modules\\.bin\\electron electron.js",
+    "prebuild": "node update-version.js",
+    "build": "parcel build public/index.html --dist-dir dist --public-url ./",
+    "dist": "npm run build && electron-builder --win --x64",
+    "sync-version": "node sync-version.js",
+    "version:set": "node sync-version.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "commit": "python tools/commit_release.py",
+    "commit:patch": "python tools/commit_release.py --bump patch --tag",
+    "commit:minor": "python tools/commit_release.py --bump minor --tag",
+    "commit:major": "python tools/commit_release.py --bump major --tag",
+    "commit-summarize": "python tools/commit_release.py --summarize",
+    "commit-summarize:patch": "python tools/commit_release.py --summarize --bump patch --tag",
+    "commit-summarize:minor": "python tools/commit_release.py --summarize --bump minor --tag",
+    "commit-summarize:major": "python tools/commit_release.py --summarize --bump major --tag"
+  },
+  "keywords": [
+    "three.js",
+    "solar system",
+    "3d",
+    "education"
+  ],
+  "author": "Chris Visser",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.12",
+    "autoprefixer": "^10.4.21",
+    "concurrently": "^8.2.2",
+    "cpx": "^1.5.0",
+    "electron": "^37.3.0",
+    "electron-builder": "^26.0.12",
+    "jest": "^30.0.5",
+    "kill-port": "^2.0.1",
+    "parcel": "^2.15.4",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.12",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.solarsystem3d.app",
+    "productName": "Solar System 3D",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron.js",
+      "electron-preload.js",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.education"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}
