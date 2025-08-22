@@ -1,3 +1,39 @@
+# Changelog
+
+## 2025-08-22
+
+### Features
+- feat: link version to public Releases tag; sync script auto-tags public v<version> after push (Chris Visser, 923c47b)
+- feat: Add semi-transparent background to left panel (Chris Visser, 9a17a53)
+
+### Docs
+- docs: add troubleshooting and clarify v1.1.31 behavior in changelog and README (Chris Visser, 89e5c3b)
+- docs: refine v1.1.31 notes in changelog and README (Chris Visser, a08549d)
+- docs: Update readme.md with latest version (Chris Visser, b3d5b51)
+
+### Chores
+- chore(release): 2025-08-22, bump version to 1.1.37 (Chris Visser, be7f4ff)
+- chore(release): 2025-08-22, bump version to 1.1.36 (Chris Visser, aef786d)
+- chore(release): 2025-08-22, bump version to 1.1.35 (Chris Visser, 79066f0)
+- chore(release): 2025-08-22, bump version to 1.1.34 (Chris Visser, b8910bd)
+- chore: checkpoint before release (Chris Visser, 8b93f35)
+- chore(release): 2025-08-22, bump version to 1.1.33 (Chris Visser, 60b5735)
+- chore: checkpoint before release (Chris Visser, 2223ac9)
+- chore: checkpoint before release (Chris Visser, 2d3ccfa)
+- chore(sync): log to sync_repos.log and console; fix push refspec to refs/heads/<branch> (Chris Visser, 3c46898)
+- chore(sync): add --verbose flag and command tracing (Chris Visser, 44828b0)
+- chore(sync): replace script on main with v4 (public cherry-pick via worktree + snapshot fallback) (Chris Visser, 48159f3)
+- chore: bump to v1.1.31; fix UI\n\n- Help: add #help-panel.visible so Help link opens panel\n- Loading: add panel styling + step animation for overlay\n- Footer: make version footer fixed, visible over canvas\n\nDocs: update changelog and readme for v1.1.31\n (Chris Visser, d8035e1)
+
+### Other
+- fixed go-to button width (Chris Visser, e83423c)
+- Made coords optional (Chris Visser, 41be943)
+- bug fixes (Chris Visser, 9b12f0a)
+- WIP before running release script (Chris Visser, 54263d3)
+- WIP before running release script (Chris Visser, 8db678d)
+- Updated .gitignore (Chris Visser, 157e3d8)
+- Added version on build. Bug fixes (Chris Visser, bf07e15)
+
 ## 2025-08-22
 
 ### Features

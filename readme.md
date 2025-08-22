@@ -285,6 +285,7 @@ For a detailed list of changes, please see the [changelog.md](changelog.md) file
 - docs: Update readme.md with latest version (Chris Visser, b3d5b51)
 
 ### Chores
+- chore(release): 2025-08-22, bump version to 1.1.37 (Chris Visser, be7f4ff)
 - chore(release): 2025-08-22, bump version to 1.1.36 (Chris Visser, aef786d)
 - chore(release): 2025-08-22, bump version to 1.1.35 (Chris Visser, 79066f0)
 - chore(release): 2025-08-22, bump version to 1.1.34 (Chris Visser, b8910bd)
@@ -298,6 +299,7 @@ For a detailed list of changes, please see the [changelog.md](changelog.md) file
 - chore: bump to v1.1.31; fix UI\n\n- Help: add #help-panel.visible so Help link opens panel\n- Loading: add panel styling + step animation for overlay\n- Footer: make version footer fixed, visible over canvas\n\nDocs: update changelog and readme for v1.1.31\n (Chris Visser, d8035e1)
 
 ### Other
+- fixed go-to button width (Chris Visser, e83423c)
 - Made coords optional (Chris Visser, 41be943)
 - bug fixes (Chris Visser, 9b12f0a)
 - WIP before running release script (Chris Visser, 54263d3)
@@ -305,6 +307,7 @@ For a detailed list of changes, please see the [changelog.md](changelog.md) file
 - Updated .gitignore (Chris Visser, 157e3d8)
 - Added version on build. Bug fixes (Chris Visser, bf07e15)
 <!-- LATEST-CHANGES-END -->
+
 
 
 
